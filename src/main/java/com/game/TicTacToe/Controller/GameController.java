@@ -42,9 +42,6 @@ public class GameController {
                                            @RequestParam int x,
                                            @RequestParam int y,
                                            @RequestHeader("API-Key") String apiKey) {
-        // Here, we should check if the API key is valid for the player making the move.
-        // However, since we don't directly associate moves with API keys in this design,
-        // this example skips that check. Implement as needed based on your security model.
 
         String moveResult = gameService.makeMove(gameId, player, x, y);
         return ResponseEntity.ok(moveResult);
