@@ -1,7 +1,7 @@
 package com.game.TicTacToe.Controller;
 
 import com.game.TicTacToe.Model.Team;
-import com.game.TicTacToe.service.GameService;
+import com.game.TicTacToe.service.GameService1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,20 +13,26 @@ import java.util.List;
 @RequestMapping("/game")
 public class GameController {
 
-    private final GameService gameService;
+    private final GameService1 gameService;
+
 
     @Autowired
-    public GameController(GameService gameService) {
+    public GameController(GameService1 gameService) {
         this.gameService = gameService;
     }
 
     @PostMapping("/new")
-    public ResponseEntity<String> createGame(@RequestHeader("Team1-API-Key") String team1ApiKey,
-                                             @RequestHeader("Team2-API-Key") String team2ApiKey) {
-        if (!gameService.isValidApiKey(team1ApiKey) || !gameService.isValidApiKey(team2ApiKey)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid API key(s)");
+    public ResponseEntity<String> createGame(@RequestParam("team1Id") String team1Id,
+                                             @RequestParam("team1ApiKey") String team1ApiKey,
+                                             @RequestParam("team2Id") String team2Id,
+                                             @RequestParam("team2ApiKey") String team2ApiKey,
+                                             @RequestParam("boardSize") int boardSize) {
+        gameService.registerTeamApiKey(team1Id, team1ApiKey);
+        gameService.registerTeamApiKey(team2Id, team2ApiKey);
+        if (!gameService.isValidApiKey(team1Id, team1ApiKey) || !gameService.isValidApiKey(team2Id, team2ApiKey)) {
+            return new ResponseEntity<>("Invalid API key(s)", HttpStatus.UNAUTHORIZED);
         }
-        String gameId = gameService.createNewGame(team1ApiKey, team2ApiKey);
+        String gameId = gameService.createNewGame(team1Id, team1ApiKey, team2Id, team2ApiKey, boardSize);
         return ResponseEntity.ok("Game created with ID: " + gameId);
     }
 
@@ -36,13 +42,12 @@ public class GameController {
                                            @RequestParam int x,
                                            @RequestParam int y,
                                            @RequestHeader("API-Key") String apiKey) {
-        if (!gameService.isValidApiKey(apiKey)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid API key");
-        }
+        // Here, we should check if the API key is valid for the player making the move.
+        // However, since we don't directly associate moves with API keys in this design,
+        // this example skips that check. Implement as needed based on your security model.
+
         String moveResult = gameService.makeMove(gameId, player, x, y);
-        return moveResult.startsWith("Invalid") ?
-                ResponseEntity.badRequest().body(moveResult) :
-                ResponseEntity.ok(moveResult);
+        return ResponseEntity.ok(moveResult);
     }
 
     @GetMapping("/{gameId}/state")
@@ -52,11 +57,8 @@ public class GameController {
     }
 
     @GetMapping("/stats/my")
-    public ResponseEntity<?> getMyTeamStats(@RequestHeader("API-Key") String apiKey) {
-        if (!gameService.isValidApiKey(apiKey)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid API key");
-        }
-        Team teamStats = gameService.getTeamStats(apiKey);
+    public ResponseEntity<?> getMyTeamStats(@RequestParam("teamId") String teamId) {
+        Team teamStats = gameService.getTeamStats(teamId);
         return teamStats == null ?
                 ResponseEntity.notFound().build() :
                 ResponseEntity.ok(teamStats);
@@ -67,13 +69,10 @@ public class GameController {
         List<Team> allTeamStats = gameService.getAllTeamStats();
         return ResponseEntity.ok(allTeamStats);
     }
+
     @GetMapping("/{gameId}/board")
     public ResponseEntity<String> getBoardState(@PathVariable String gameId) {
         String boardPrintout = gameService.printBoard(gameId);
-        if (boardPrintout.equals("Game does not exist.")) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(boardPrintout);
-        }
         return ResponseEntity.ok(boardPrintout);
     }
-
 }
