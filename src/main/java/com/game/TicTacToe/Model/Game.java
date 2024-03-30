@@ -11,10 +11,30 @@ public class Game {
     private TeamDetails team2;
     private List<Move> moves = new ArrayList<>();
     private int boardSize;
+    private int currentPlayer;
+    private int lastPlayer;
+
+    public int getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void setCurrentPlayer(int currentPlayer) {
+        this.currentPlayer = currentPlayer;
+    }
+
+    public int getLastPlayer() {
+        return lastPlayer;
+    }
+
+    public void setLastPlayer(int lastPlayer) {
+        this.lastPlayer = lastPlayer;
+    }
 
     // Constructor that takes gameId and boardSize
     public Game(String gameId, int boardSize) {
         this.gameId = gameId;
+        this.currentPlayer=1;
+        this.lastPlayer=0;
         this.boardSize = boardSize;
         this.board = new int[boardSize][boardSize]; // Initialize the board with the specified size
         this.status = "IN_PROGRESS"; // Default status

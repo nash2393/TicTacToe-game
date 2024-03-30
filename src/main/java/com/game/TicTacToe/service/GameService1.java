@@ -29,13 +29,18 @@ public class GameService1 {
         if (!isValidApiKey(team1Id, team1ApiKey) || !isValidApiKey(team2Id, team2ApiKey)) {
             return "Invalid API key(s)";
         }
-        String gameId = UUID.randomUUID().toString();
+        String gameId = generateGameId();
         Game game = new Game(gameId, boardSize); // Pass boardSize to the Game constructor
         Game.TeamDetails team1 = new Game.TeamDetails(team1Id);
         Game.TeamDetails team2 = new Game.TeamDetails(team2Id);
         game.setTeams(team1, team2);
         games.put(gameId, game);
         return gameId;
+    }
+    private static String generateGameId() {
+        Random random = new Random();
+        int gameIdInt = 10000 + random.nextInt(90000); // Generate a random 5-digit number
+        return String.valueOf(gameIdInt);
     }
     // Processes a move in a game
     // Processes a move in a game and updates game results accordingly
@@ -55,18 +60,29 @@ public class GameService1 {
             //String gameState = checkWinOrDraw(game);
              return "Game over: " + game.getStatus() + ". Winning team: " + getWinningTeamId(gameId) + "\n" + printBoard(game.getBoard());
         }
+        if (game.getCurrentPlayer() != player) {
+            return "Invalid move. It's the other player's turn.";
+        }
+
+        // Check if the player made consecutive moves
+        if (game.getLastPlayer() == player) {
+            return "Invalid move. Cannot make consecutive moves. It's the other player's turn.";
+        }
 
         game.getBoard()[x][y] = player;
         game.getMoves().add(new Game.Move(player, x, y)); // Recording the move
 
         String gameState = checkWinOrDraw(game);
         game.setStatus(gameState);
+        game.setLastPlayer(player);
+
 
         if (!gameState.equals("IN_PROGRESS")) {
             // Update the game results if the game is concluded
             updateGameResults(gameId, gameState);
             return "Game over: " + gameState + ". Winning team: " + getWinningTeamId(gameId) + "\n" + printBoard(game.getBoard());
         }
+        game.setCurrentPlayer(player == 1 ? 2 : 1);
 
         return "Move accepted. Game continues.\n" + printBoard(game.getBoard());
     }
