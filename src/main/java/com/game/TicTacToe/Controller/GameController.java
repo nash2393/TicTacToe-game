@@ -26,13 +26,14 @@ public class GameController {
                                              @RequestParam("team1ApiKey") String team1ApiKey,
                                              @RequestParam("team2Id") String team2Id,
                                              @RequestParam("team2ApiKey") String team2ApiKey,
-                                             @RequestParam("boardSize") int boardSize) {
+                                             @RequestParam("boardSize") int boardSize,
+                                             @RequestParam(value = "target", required = false, defaultValue = "0") int target) {
         gameService.registerTeamApiKey(team1Id, team1ApiKey);
         gameService.registerTeamApiKey(team2Id, team2ApiKey);
         if (!gameService.isValidApiKey(team1Id, team1ApiKey) || !gameService.isValidApiKey(team2Id, team2ApiKey)) {
             return new ResponseEntity<>("Invalid API key(s)", HttpStatus.UNAUTHORIZED);
         }
-        String gameId = gameService.createNewGame(team1Id, team1ApiKey, team2Id, team2ApiKey, boardSize);
+        String gameId = gameService.createNewGame(team1Id, team1ApiKey, team2Id, team2ApiKey, boardSize, target);
         return ResponseEntity.ok("Game created with ID: " + gameId);
     }
 

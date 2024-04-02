@@ -24,13 +24,15 @@ public class GameService1 {
     }
 
     // Creates a new game with two teams
-    public String createNewGame(String team1Id, String team1ApiKey, String team2Id, String team2ApiKey, int boardSize) {
-
+    public String createNewGame(String team1Id, String team1ApiKey, String team2Id, String team2ApiKey, int boardSize, int target) {
         if (!isValidApiKey(team1Id, team1ApiKey) || !isValidApiKey(team2Id, team2ApiKey)) {
             return "Invalid API key(s)";
         }
         String gameId = generateGameId();
-        Game game = new Game(gameId, boardSize); // Pass boardSize to the Game constructor
+        if (target <= 0) {
+            target = boardSize; // Set target length equal to board size
+        }
+        Game game = new Game(gameId, boardSize, target); // Pass target to the Game constructor
         Game.TeamDetails team1 = new Game.TeamDetails(team1Id);
         Game.TeamDetails team2 = new Game.TeamDetails(team2Id);
         game.setTeams(team1, team2);
@@ -58,7 +60,7 @@ public class GameService1 {
         }
         if(!game.getStatus().equals("IN_PROGRESS")){
             //String gameState = checkWinOrDraw(game);
-             return "Game over: " + game.getStatus() + ". Winning team: " + getWinningTeamId(gameId) + "\n" + printBoard(game.getBoard());
+            return "Game over: " + game.getStatus() + ". Winning team: " + getWinningTeamId(gameId) + "\n" + printBoard(game.getBoard());
         }
         if (game.getCurrentPlayer() != player) {
             return "Invalid move. It's the other player's turn.";
@@ -135,23 +137,88 @@ public class GameService1 {
     }
 
 
-    private boolean checkWin(int[][] board) {
-        // Check rows and columns for a win
-        for (int i = 0; i < 3; i++) {
-            if ((board[i][0] != 0 && board[i][0] == board[i][1] && board[i][1] == board[i][2]) ||
-                    (board[0][i] != 0 && board[0][i] == board[1][i] && board[1][i] == board[2][i])) {
-                return true;
+//    private boolean checkWin(int[][] board) {
+//        // Check rows and columns for a win
+//        for (int i = 0; i < 3; i++) {
+//            if ((board[i][0] != 0 && board[i][0] == board[i][1] && board[i][1] == board[i][2]) ||
+//                    (board[0][i] != 0 && board[0][i] == board[1][i] && board[1][i] == board[2][i])) {
+//                return true;
+//            }
+//        }
+//
+//        // Check diagonals for a win
+//        if ((board[0][0] != 0 && board[0][0] == board[1][1] && board[1][1] == board[2][2]) ||
+//                (board[0][2] != 0 && board[0][2] == board[1][1] && board[1][1] == board[2][0])) {
+//            return true;
+//        }
+//
+//        return false;
+//    }
+private boolean checkWin(int[][] board, int target) {
+    // Check rows, columns, and diagonals for a win
+    int size = board.length;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            int currentPlayer = board[i][j];
+            if (currentPlayer != 0) {
+                // Check horizontal
+                if (j + target <= size) {
+                    boolean horizontalWin = true;
+                    for (int k = j + 1; k < j + target; k++) {
+                        if (board[i][k] != currentPlayer) {
+                            horizontalWin = false;
+                            break;
+                        }
+                    }
+                    if (horizontalWin) {
+                        return true;
+                    }
+                }
+                // Check vertical
+                if (i + target <= size) {
+                    boolean verticalWin = true;
+                    for (int k = i + 1; k < i + target; k++) {
+                        if (board[k][j] != currentPlayer) {
+                            verticalWin = false;
+                            break;
+                        }
+                    }
+                    if (verticalWin) {
+                        return true;
+                    }
+                }
+                // Check diagonal (top-left to bottom-right)
+                if (i + target <= size && j + target <= size) {
+                    boolean diagonal1Win = true;
+                    for (int k = 1; k < target; k++) {
+                        if (board[i + k][j + k] != currentPlayer) {
+                            diagonal1Win = false;
+                            break;
+                        }
+                    }
+                    if (diagonal1Win) {
+                        return true;
+                    }
+                }
+                // Check diagonal (top-right to bottom-left)
+                if (i + target <= size && j - target + 1 >= 0) {
+                    boolean diagonal2Win = true;
+                    for (int k = 1; k < target; k++) {
+                        if (board[i + k][j - k] != currentPlayer) {
+                            diagonal2Win = false;
+                            break;
+                        }
+                    }
+                    if (diagonal2Win) {
+                        return true;
+                    }
+                }
             }
         }
-
-        // Check diagonals for a win
-        if ((board[0][0] != 0 && board[0][0] == board[1][1] && board[1][1] == board[2][2]) ||
-                (board[0][2] != 0 && board[0][2] == board[1][1] && board[1][1] == board[2][0])) {
-            return true;
-        }
-
-        return false;
     }
+    return false;
+}
+
 
     private boolean isBoardFull(int[][] board) {
         for (int[] row : board) {
@@ -165,7 +232,7 @@ public class GameService1 {
     }
 
     private String checkWinOrDraw(Game game) {
-        if (checkWin(game.getBoard())) {
+        if (checkWin(game.getBoard(),game.getTarget())) {
             // Assuming player 1 is always the winner if a win is detected.
             // This is a simplification; you should implement logic to determine the actual winner.
             return game.getMoves().get(game.getMoves().size() - 1).getPlayer() == 1 ? "TEAM1_WON" : "TEAM2_WON";

@@ -11,6 +11,16 @@ public class Game {
     private TeamDetails team2;
     private List<Move> moves = new ArrayList<>();
     private int boardSize;
+
+    public void setTarget(int target) {
+        this.target = target;
+    }
+
+    public int getTarget() {
+        return target;
+    }
+
+    private int target;
     private int currentPlayer;
     private int lastPlayer;
 
@@ -31,13 +41,14 @@ public class Game {
     }
 
     // Constructor that takes gameId and boardSize
-    public Game(String gameId, int boardSize) {
+    public Game(String gameId, int boardSize,int target) {
         this.gameId = gameId;
         this.currentPlayer=1;
         this.lastPlayer=0;
         this.boardSize = boardSize;
         this.board = new int[boardSize][boardSize]; // Initialize the board with the specified size
         this.status = "IN_PROGRESS"; // Default status
+        this.target = target;
     }
 
     // Setter method for setting teams
